@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lisp is the most powerful programming language. The power of lisp macros.</title>
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+  </head>
+  <body>
+    <header id="main-header">
+      <h1>Lisp is the most powerful programming language. The power of lisp macros.</h1>
+    </header>
+    <nav>
+      <ul class="menu"><!--
+      --><li><a href="index.html">Home</a></li><!--
+      --><li><a href="about.html">About</a></li><!--
+      --><li><a href="lisp-powerful.html">About Lisp</a></li><!--
+      --><li><a href="contact.html">Contact</a></li>
+      </ul>
+    </nav>
+    <hr>
+    <section id="basics">
+      <h2>The basics.</h2>
+      <p>In order for me to explain why the above affirmation is true i
+        need the reader to be familiar with a few concepts: Expressions in lisp,
+        lists and <code>EVAL</code>.
+        <br>
+        All functions, macros and special operators on this page will be written in
+        <code>ALL CAPS</code> because that is the convention and is a clear way to tell
+        what i mean.
+        If you know the basics already, skip to <a href="#macros">macros</a>
+      </p>
+      <h2>Expression based language.</h2>
+      <p>In lisp, everything is an expression that returns something, be it a number,
+        string, boolean value or whatever. We will write the return value of something
+        via <code>=> VALUE</code>, for example:
+        <pre><code>CL-USER> 1
+=> 1
+CL-USER> (+ 1 2)
+=> 3
+CL-USER> (if t
+             "this is true"
+             "fake")
+=> "this is true"
+CL-USER> (if nil
+             "this is true"
+             "fake")
+=> "this is true"</code></pre>
+        <code>CL-USER></code> is just the interactive prompt. Pay attention to the <code>IF</code> above.
+        It's like a function that takes 3 arguments and returns the first one
+        it's truthy. Truthy, as in non-<code>NIL</code>. If it's anything, but <code>NIL</code> it
+        evaluates the first expression and returns the result of its
+        evaluation. Otherwise, it returns the second expression.
+        <br>
+        In <code>&amp;body</code> clauses, the result of the last expression is returned.
+        In the following example, upon calling <code>(MY-FUNCTION)</code>, 5 will be returned.
+        <pre><code>(defun my-function ()
+  1
+  2
+  3
+  4
+  5)
+CL-USER> (my-function)
+=> 5</pre></code>
+        There are more things about expressions, but for now this shoulds suffice.
+      </p>
+      <h2>Lists in lisp</h2>
+      <p>
+        Lisp stands for "List processor" and it's right. In lisp, to create a
+        list, you just put a single quote around a pair of parens.
+        <pre><code>CL-USER> '(1 2 3 4)
+=> (1 2 3 4)</pre></code>
+        The printed lists don't need the quote in front so they are just printed
+        like parens surrounding items.
+        <br>
+        Lists can also hold many different types.
+        <pre><code>CL-USER> '(1 "two" 3.0 four)
+=> (1 "two" 3.0 four)
+CL-USER</code></pre>
+        <code>four</code> in the above example is a <em>symbol</em>.
+        Symbols in lisp are a data type used for representing names of
+        all kinds. We can bind a variable, a function, a macro, whatever
+        to a symbol.
+        <br>
+        There can even be nested lists, they don't need to be quoted because
+        the contents of lists don't evaluate. This also explains the symbol
+        situation. If those symbols were variable we'd get the value instead
+        of the symbol, but lisp doesn't evaluate the contents of a quoted list.
+        For optional evaluation there is quasiquote, which i'll mention later.
+        <pre><code>
+CL-USER> '(1 ((2 3) 4) five)
+=> (1 ((2 3) 4) five)</code></pre>
+      </p>
+      <h2><code>EVAL</code></h2>
+      <p>
+        In lisp, <code>EVAL</code> is used for evaluating an s-expression.
+        Unlike python, where <code>eval</code> evaluates a string, in lisp,
+        it evaluates an s-expression. An s-expression is either an atom (value)
+        or a list of s-expressions.
+        <pre><code>
+CL-USER> (eval 2) ;; in this case, 2 is an atom
+=> 2
+CL-USER> (eval '(my-function)) ;; in this case, it's a list with a single element
+=> 5</code></pre>
+        How convenient! If it is called with a list, eval treats is as lisp code!
+      </p>
+    </section>
+    <section id="macros">
+      <h2>Macros</h2>
+      <p>
+        I have a crazy idea now. What if we create a function that manipulates lists.
+        What's so crazy about it? Well, we'll pass that function lisp code. What? Yes,
+        we will just quote the code to make it into a list. Suppose we wrote a function
+        <code>RECURSIVE-REVERSE</code> which recursively reverses a list.
+        <pre><code>CL-USER> (recursive-reverse '(1 (2 3 +) boolean-value if)
+=> (if boolean-value (+ 3 2) 1)</code></pre>
+        Oh! We got valid lisp code as a result. Now what if we <code>EVAL</code> it?
+        <pre><code>CL-USER> (defvar boolean-value nil)
+CL-USER> (eval (recursive-reverse '(1 (2 3 +) boolean-value if))
+=> 1</code></pre>
+        Firstly, we define a variable <code>boolean-value</code> in order for it to hold
+        a value for our if. Now we reverse the list and pass the result to <code>EVAL</code>.
+        It's evaluated and returns 1, because <code>boolean-value</code> is <code>NIL</code>
+        and it chooses the second branch.
+        <br>
+        Now think about what we have just done. We manipulated lisp code as if
+        we manipulated any ol' list. Let's write something a little useful now, shall we?
+        <h2>Babby's first code manipulating function: <code>WHEN</code></h2>
+        We have a little annoyance with <code>IF</code>: It's structure is
+        <code>(if boolean true-case &optional false-case)</code><br>
+        How do we write more statements in a branch? We use begin.
+        <pre><code>(if boolean
+  (begin
+    (display "this is so true")
+    (newline)))</code></pre>
+        Note: we didn't write the <code>false-case</code> because let's say for our example
+        we don't need it. It is optional, as marked by the <code>&optional</code>
+        in <code>IF</code>'s prototype.
+        <br>
+        <code>BEGIN</code>groups statements together, but it can get tedious to
+        write it all the time there is a single branch if. Why don't we fix it by
+        writing a function that will put <code>BEGIN</code> there for us?
+        <pre><code>(defun baby-when (condition &rest body)
+  `(if ,condition
+       (begin
+        ,@body)))</code></pre>
+        <pre><code>CL-USER> (baby-when 't '(display "this is so true")
+                    '(newline))
+(IF T
+    (BEGIN (DISPLAY "this is so true") (NEWLINE)))</code></pre>
+        We define a function with <code>DEFUN</code>, called <code>baby-when</code>.
+        It takes 2 arguments: <code>condition</code> and <code>body</code> which is
+        a list containing the <code>&rest</code> of the arguments provided to it.
+        What we do next is use a backtick (<code>`</code>) to create a
+        <strong>quasiquoted</strong> list. In a quasiquoted list, all the elements
+        prefixed by a comma (<code>,</code>) are evaluated and the result gets put
+        into the list, instead of the element itself. If we use <code>,@</code>
+        the following expression, which must <em>evaluate</em> to a list is
+        <em>spliced</em>.
+        <pre><code>`((list 1 2 3) ,(list 4 5 6) ,@(list 7 8 9))
+=> ((list 1 2 3) (4 5 6) 7 8 9)</code></pre>
+        So, when calling <code>baby-when</code>, it replaces things, like in
+        templates.
+        <h2>Babby's first macro</h2>
+        To use <code>baby-when</code>, we need to quote all its
+        arguments and put it inside an <code>EVAL</code>.
+        <pre><code>(eval
+  (baby-when 't
+    '(display "hello")
+    '(newline)))</code></pre>
+        Now that's a lot of boilerplate, is it even worth it this way?
+        I don't think it is. Luckily, we can define baby-when as a macro.
+        <pre><code>(defmacro baby-when (condition &rest body)
+  `(if ,condition
+       (begin
+        ,@body)))</code></pre>
+        Notice how the only bit we changed is the function with which we
+        define, with <code>DEFMACRO</code>, however it has massively changed
+        in terms of usability.
+        <pre><code>(baby-when t
+  (display "hello")
+  (newline))</code></pre>
+        This, my friends, is the power of macros. We manipulated code as if
+        we were manipulating a data structure, as if we were filling some
+        template. And macros aren't only used as simple templates, they are
+        written in lisp too, so you could have a macro that does some calculations,
+        calls some lisp functions and do whatever before even getting to the
+        code itself. And they're specific to lisp because in other languages code isn't data.
+        In other languages, the maximum you could do is manipulate strings (which is painful).
+        True, you can write your own parser, tokenize your code and manipulate
+        it that way but oh well you just created a lisp. Plus, other languages
+        don't have <em>macros</em>, they might have eval, but then you'd still
+        be wrapping everything in an <code>eval(...)</code> which is not cool.
+      </p>
+    </section>
+    <p>
+    </p>
+    <hr>
+    <footer id="footer">
+      Copyright 2020 &copy; Soft Waffle
+    </footer>
+  </body>
+n<html>
