@@ -126,7 +126,7 @@ CL-USER> (eval (recursive-reverse '(1 (2 3 +) boolean-value if))
         Now think about what we have just done. We manipulated lisp code as if
         we manipulated any ol' list. Let's write something a little useful now, shall we?
         <h2>Babby's first code manipulating function: <code>WHEN</code></h2>
-        We have a little annoyance with <code>IF</code>: It's structure is
+        We have a little annoyance with <code>IF</code>: Its structure is
         <code>(if boolean true-case &optional false-case)</code><br>
         How do we write more statements in a branch? We use begin.
         <pre><code>(if boolean
